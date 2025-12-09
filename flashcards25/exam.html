@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flashcards</title>
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding: 2em 1em;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+h1 {
+  color: white;
+  text-align: center;
+  margin-bottom: 0.5em;
+  font-size: 2.5em;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+.subtitle {
+  color: rgba(255,255,255,0.9);
+  text-align: center;
+  margin-bottom: 2em;
+  font-size: 1.1em;
+}
+
+/* Search Bar */
+.search-section {
+  margin-bottom: 1.5em;
+}
+
+#searchInput {
+  width: 100%;
+  padding: 1em 1.5em;
+  font-size: 1.1em;
+  border: none;
+  border-radius: 50px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  outline: none;
+  transition: box-shadow 0.3s;
+}
+
+#searchInput:focus {
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+/* Tag Filters */
+.tag-section {
+  background: white;
+  padding: 1.5em;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  margin-bottom: 1.5em;
+}
+
+.tag-section h2 {
+  margin: 0 0 1em 0;
+  font-size: 1.2em;
+  color: #333;
+}
+
+.tag-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
+}
+
+.tag-btn {
+  padding: 0.6em 1.2em;
+  border: 2px solid #667eea;
+  background: white;
+  color: #667eea;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 0.95em;
+  font-weight: 500;
+  transition: all 0.3s;
+  outline: none;
+}
+
+.tag-btn:hover {
+  background: #f0f0f0;
+  transform: translateY(-2px);
+}
+
+.tag-btn.active {
+  background: #667eea;
+  color: white;
+  box-shadow: 0 4px 10px rgba(102, 126, 234, 0.4);
+}
+
+/* Questions Section */
+.questions-section {
+  background: white;
+  padding: 1.5em;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.questions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1em;
+  padding-bottom: 0.5em;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.questions-header h2 {
+  margin: 0;
+  font-size: 1.2em;
+  color: #333;
+}
+
+.question-count {
+  color: #667eea;
+  font-weight: 600;
+  font-size: 1em;
+}
+
+/* Question Cards */
+.question-card {
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 0.75em;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+
+.question-card:hover {
+  border-color: #667eea;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+.question-header {
+  padding: 1em 1.25em;
+  cursor: pointer;
+  background: #fafafa;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.3s;
+}
+
+.question-header:hover {
+  background: #f0f0f0;
+}
+
+.question-card.expanded .question-header {
+  background: #667eea;
+  color: white;
+}
+
+.question-text {
+  flex: 1;
+  font-weight: 500;
+  font-size: 1.05em;
+  padding-right: 1em;
+}
+
+.expand-icon {
+  font-size: 1.2em;
+  transition: transform 0.3s;
+  color: #667eea;
+}
+
+.question-card.expanded .expand-icon {
+  transform: rotate(180deg);
+  color: white;
+}
+
+.answer-section {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease-out;
+}
+
+.answer-content {
+  padding: 1.5em 1.25em;
+  background: #f9f9f9;
+  border-top: 2px solid #e0e0e0;
+  position: relative;
+}
+
+.answer-text {
+  color: #2d572c;
+  font-size: 1.05em;
+  line-height: 1.6;
+  font-style: italic;
+  margin-bottom: 2em;
+}
+
+.source-badge {
+  position: absolute;
+  bottom: 0.5em;
+  right: 0.75em;
+  background: #667eea;
+  color: white;
+  padding: 0.3em 0.8em;
+  border-radius: 15px;
+  font-size: 0.8em;
+  font-weight: 500;
+}
+
+/* Loading and Empty States */
+.loading {
+  text-align: center;
+  padding: 3em;
+  color: #666;
+  font-size: 1.2em;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3em;
+  color: #666;
+}
+
+.empty-state-icon {
+  font-size: 3em;
+  margin-bottom: 0.5em;
+}
+
+.empty-state-text {
+  font-size: 1.2em;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  body {
+    padding: 1em 0.5em;
+  }
+
+  h1 {
+    font-size: 2em;
+  }
+
+  .tag-section, .questions-section {
+    padding: 1em;
+  }
+
+  .question-header {
+    padding: 0.75em 1em;
+  }
+
+  .answer-content {
+    padding: 1em;
+  }
+
+  .question-text {
+    font-size: 0.95em;
+  }
+
+  .answer-text {
+    font-size: 0.95em;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Flashcards</h1>
+  <p class="subtitle">Search, filter by topic, and review all flashcards</p>
+
+  <!-- Search Bar -->
+  <div class="search-section">
+    <input 
+      type="text" 
+      id="searchInput" 
+      placeholder="Search questions and answers..."
+      autocomplete="off"
+    >
+  </div>
+
+  <!-- Tag Filters -->
+  <div class="tag-section">
+    <h2>Filter by Topic</h2>
+    <div class="tag-buttons" id="tagButtons">
+      <button class="tag-btn active" data-tag="all">All</button>
+    </div>
+  </div>
+
+  <!-- Questions List -->
+  <div class="questions-section">
+    <div class="questions-header">
+      <h2>Questions</h2>
+      <span class="question-count" id="questionCount">0 questions</span>
+    </div>
+    <div id="questionsList">
+      <div class="loading">Loading flashcards...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// plug in the new data files here; eg. 'Fair+Gintis', 'silly rules' etc. esentially plug and play.
+const dataFiles = [
+  'exam'
+];
+
+let allQuestions = [];
+let currentTag = 'all';
+let searchQuery = '';
+
+// load all
+async function loadAllFlashcards() {
+  const promises = dataFiles.map(fileName => {
+    return new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = `${fileName}.js`;
+      
+      script.onload = () => {
+        if (window.flashcardData) {
+          const questions = window.flashcardData.map(card => ({
+            ...card,
+            source: fileName
+          }));
+          resolve(questions);
+          // clear for next file
+          delete window.flashcardData;
+        } else {
+          resolve([]);
+        }
+      };
+      
+      script.onerror = () => {
+        console.warn(`Failed to load ${fileName}.js`);
+        resolve([]);
+      };
+      
+      document.head.appendChild(script);
+    });
+  });
+
+  const results = await Promise.all(promises);
+  allQuestions = results.flat();
+  
+  initializeApp();
+}
+
+
+function initializeApp() {
+  generateTagButtons();
+  renderQuestions();
+  setupEventListeners();
+}
+
+// generate tag buttons
+function generateTagButtons() {
+  const tagSet = new Set();
+  
+  allQuestions.forEach(q => {
+    if (q.tags && Array.isArray(q.tags)) {
+      q.tags.forEach(tag => tagSet.add(tag));
+    }
+  });
+  
+  const sortedTags = Array.from(tagSet).sort();
+  const tagButtonsContainer = document.getElementById('tagButtons');
+  
+  // "All" button
+  const allButton = tagButtonsContainer.querySelector('[data-tag="all"]');
+  
+  // add tag buttons
+  sortedTags.forEach(tag => {
+    const btn = document.createElement('button');
+    btn.className = 'tag-btn';
+    btn.setAttribute('data-tag', tag);
+    btn.textContent = tag;
+    btn.onclick = () => filterByTag(tag);
+    tagButtonsContainer.appendChild(btn);
+  });
+}
+
+// filter by tag
+function filterByTag(tag) {
+  currentTag = tag;
+  
+  // update active button
+  document.querySelectorAll('.tag-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  document.querySelector(`[data-tag="${tag}"]`).classList.add('active');
+  
+  renderQuestions();
+}
+
+// search functionality
+function handleSearch(query) {
+  searchQuery = query.toLowerCase().trim();
+  renderQuestions();
+}
+
+// filter questions
+function getFilteredQuestions() {
+  let filtered = allQuestions;
+  
+  // fiter by tag
+  if (currentTag !== 'all') {
+    filtered = filtered.filter(q => 
+      q.tags && q.tags.includes(currentTag)
+    );
+  }
+  
+  // filter by search query
+  if (searchQuery) {
+    filtered = filtered.filter(q => {
+      const questionMatch = q.question.toLowerCase().includes(searchQuery);
+      const answerMatch = q.answer.toLowerCase().includes(searchQuery);
+      return questionMatch || answerMatch;
+    });
+  }
+  
+  return filtered;
+}
+
+// render questions
+function renderQuestions() {
+  const filtered = getFilteredQuestions();
+  const questionsList = document.getElementById('questionsList');
+  const questionCount = document.getElementById('questionCount');
+  
+  // update count
+  questionCount.textContent = `${filtered.length} question${filtered.length !== 1 ? 's' : ''}`;
+  
+  // empty state
+  if (filtered.length === 0) {
+    questionsList.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">🔍</div>
+        <div class="empty-state-text">No questions found</div>
+      </div>
+    `;
+    return;
+  }
+  
+  // render questions
+  questionsList.innerHTML = filtered.map((q, index) => `
+    <div class="question-card" data-index="${index}">
+      <div class="question-header" onclick="toggleQuestion(${index})">
+        <div class="question-text">${q.question}</div>
+        <div class="expand-icon">▼</div>
+      </div>
+      <div class="answer-section">
+        <div class="answer-content">
+          <div class="answer-text">${q.answer}</div>
+          <div class="source-badge">${q.source}</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// toggle question expansion
+function toggleQuestion(index) {
+  const card = document.querySelector(`[data-index="${index}"]`);
+  const answerSection = card.querySelector('.answer-section');
+  
+  if (card.classList.contains('expanded')) {
+    // Collapse
+    card.classList.remove('expanded');
+    answerSection.style.maxHeight = '0';
+  } else {
+    // Expand
+    card.classList.add('expanded');
+    answerSection.style.maxHeight = answerSection.scrollHeight + 'px';
+  }
+}
+
+
+function setupEventListeners() {
+  
+  const searchInput = document.getElementById('searchInput');
+  searchInput.addEventListener('input', (e) => {
+    handleSearch(e.target.value);
+  });
+  
+  
+  document.querySelector('[data-tag="all"]').onclick = () => filterByTag('all');
+}
+
+
+loadAllFlashcards();
+</script>
+
+</body>
+</html>
+
