@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Alignment Problems Spinner</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      margin: 0;
+      padding: 1.5rem;
+      background: #ffffff;
+      color: #222;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+
+    .spinner-container {
+      position: relative;
+      width: 360px;
+      height: 360px;
+      margin: 1.5rem auto;
+    }
+
+    .wheel {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 4px solid #444;
+      background: #ffffff; /*conic-gradient(
+        #e0f7fa 0deg 30deg,
+        #ffe0b2 30deg 60deg,
+        #e1bee7 60deg 90deg,
+        #c8e6c9 90deg 120deg,
+        #fff9c4 120deg 150deg,
+        #bbdefb 150deg 180deg,
+        #ffccbc 180deg 210deg,
+        #d7ccc8 210deg 240deg,
+        #f8bbd0 240deg 270deg,
+        #d1c4e9 270deg 300deg,
+        #c5e1a5 300deg 330deg,
+        #ffe082 330deg 360deg
+      );*/
+      transform: translate(-50%, -50%);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+      overflow: hidden;
+    }
+
+    .segment-label {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 50%;
+      height: 1.4em;
+      transform-origin: 0% 50%;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      pointer-events: none;
+    }
+
+    .segment-label span {
+      display: inline-block;
+      padding: 0 0.25rem;
+      font-size: 0.65rem;
+      text-align: left;
+      padding-right: 0.4rem;
+      /*background: rgba(255, 255, 255, 0.8);*/
+      border-radius: 6px;
+      max-width: 8.5em;
+      line-height: 1.1;
+    }
+
+    /* Pointer at 3 o'clock */
+    .pointer {
+      position: absolute;
+      top: 50%;
+      right: -10px;
+      transform: translateY(-50%) rotate(-90deg);
+      width: 0;
+      height: 0;
+      border-left: 12px solid transparent;
+      border-right: 12px solid transparent;
+      border-bottom: 20px solid #d32f2f;
+      z-index: 10;
+    }
+
+    #spinButton {
+      padding: 0.6rem 1.4rem;
+      font-size: 1rem;
+      border-radius: 999px;
+      border: none;
+      background: #3949ab;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      margin-bottom: 1rem;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.2s ease;
+    }
+
+    #spinButton:active {
+      transform: translateY(1px);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      background: #283593;
+    }
+
+    #spinButton:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+      box-shadow: none;
+    }
+
+    #result {
+      max-width: 700px;
+      text-align: left;
+      font-size: 0.95rem;
+      margin-top: 0.5rem;
+      padding: 0.75rem 1rem;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+    }
+
+    #result-title {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    #result-desc {
+      font-size: 0.9rem;
+      margin-bottom: 0.4rem;
+    }
+
+    #result-mech {
+      font-size: 0.85rem;
+      opacity: 0.9;
+      margin-top: 0.4rem;
+    }
+
+    #result-mech span.label {
+      font-weight: 600;
+    }
+
+    #result-mech ul {
+      margin: 0.25rem 0 0 1.2rem;
+      padding: 0;
+    }
+
+    #result-mech li {
+      margin-bottom: 0.15rem;
+    }
+
+    @media (max-width: 480px) {
+      .spinner-container {
+        width: 280px;
+        height: 280px;
+      }
+      .segment-label span {
+        font-size: 0.6rem;
+      }
+
+    #result-prompt {
+        margin-top: 0.75rem;
+        font-size: 0.9rem;
+        opacity: 0.95;
+        }
+
+    #result-prompt ol {
+        margin: 0.25rem 0 0 1.2rem;
+        padding: 0;
+        }
+
+    #result-prompt li {
+        margin-bottom: 0.4rem;
+        }
+
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Alignment Problems Spinner</h1>
+
+  <div class="spinner-container">
+    <div class="pointer"></div>
+    <div id="wheel" class="wheel"></div>
+  </div>
+
+  <button id="spinButton">Spin</button>
+
+  <div id="result">
+    <div id="result-title">Click “Spin” to choose an alignment problem.</div>
+    <div id="result-desc"></div>
+    <div id="result-prompt"></div>
+    <div id="result-analogs"></div>
+    <div id="result-mech"></div>
+  </div>
+
+   <script>
+    const problems = [
+      {
+        short: "Reward Hacking",
+        full: "Incentive Misalignment and Reward Hacking (Rewarding A While Hoping for B)",
+        generic: "Metrics or incentives reward the wrong behavior. Reward hacking. Specification Gaming. Goodhart's Law. Classic examples include free riding in public-goods and collective action problems, where individuals are rewarded for not contributing while hoping others will.",
+        analogs: {
+          human: "Doing homework for the grade rather than for learning.",
+          organizational: "Sales teams hit revenue targets by overselling or misleading customers, damaging long-term trust.",
+          expert: "Surgeons are rewarded for procedure volume rather than patient outcomes.",
+          machine: "An RL agent in CoastRunners learns to loop in the harbor hitting targets for points rather than racing properly."
+        },
+        mechanisms: [
+          "Incentive design & reward shaping aligned with true goals",
+          "Qualification & training so agents understand real objectives",
+          "Transparency & recordkeeping (metrics, audits, outcome tracking)",
+          "Deterrence for gaming or cheating metrics",
+          "Structural separation between goal-setters, performers, and evaluators"
+        ]
+      },
+      {
+        short: "Negative Side Effects",
+        full: "Negative Side Effects",
+        generic: "Pursuing a goal causes collateral damage because important constraints or values were not represented in the objective.",
+        analogs: {
+          human: "Crash dieting to lose weight quickly, harming long-term health.",
+          organizational: "A push for productivity leads to burnout and safety lapses.",
+          expert: "Aggressive treatment improves a clinical metric but worsens overall quality of life.",
+          machine: "A robot moves a box to the goal but knocks over fragile objects along the way."
+        },
+        mechanisms: [
+          "Safety constraints & impact regularization",
+          "Red-team style stress testing for side effects",
+          "Transparency & monitoring of externalities",
+          "Multi-objective design including explicit harm-avoidance",
+          "Ethical principles (e.g., non-maleficence) as guardrails"
+        ]
+      },
+      {
+        short: "Unsafe Exploration",
+        full: "Unsafe Exploration",
+        generic: "Systems or agents try risky or harmful actions while learning or experimenting, before we know whether those actions are safe.",
+        analogs: {
+          human: "Teenagers experimenting with drugs or dangerous stunts to 'see what happens'.",
+          organizational: "Startups deploying untested features or products directly to users.",
+          expert: "A researcher runs a high-risk experiment without adequate safety protocols.",
+          machine: "An RL agent tries dangerous maneuvers while exploring an environment."
+        },
+        mechanisms: [
+          "Safe exploration algorithms & sandboxing",
+          "Human-in-the-loop control for high-risk actions",
+          "Qualification & gating of capabilities",
+          "Deterrence and clear boundaries on unacceptable experiments",
+          "Progressive rollout & staged deployment"
+        ]
+      },
+      {
+        short: "Scalable Oversight",
+        full: "Limited or Unscalable Oversight",
+        generic: "Humans cannot supervise, audit, or evaluate behavior at the required scale or capability level, so misalignment escapes review.",
+        analogs: {
+          human: "Parents cannot monitor all of their teenager's online and social activity.",
+          organizational: "A manager with dozens of direct reports cannot meaningfully supervise each one.",
+          expert: "One attending physician supervises too many residents to check every decision.",
+          machine: "Humans cannot evaluate every output or internal decision of a large-scale model, especially on superhuman tasks."
+        },
+        mechanisms: [
+          "Layered control & oversight structures (hierarchies, reviews)",
+          "Transparency & recordkeeping to reduce per-decision oversight cost",
+          "Third-party monitoring and auditing",
+          "Scalable oversight techniques (IDA, debate, recursive reward modeling)",
+          "Sampling, spot checks, and automated anomaly detection"
+        ]
+      },
+      {
+        short: "Domain / Distributional Shift",
+        full: "Misgeneralization, Domain / Distributional Shift",
+        generic: "The system or agent generalizes the wrong rule, behaves incorrectly in new contexts, or drifts over time away from original goals.",
+        analogs: {
+          human: "A child learns 'be quiet in class' as 'never speak up at all'.",
+          organizational: "An organization's mission slowly drifts as leaders chase short-term opportunities.",
+          expert: "A clinician misdiagnoses when symptoms present atypically compared to textbook cases.",
+          machine: "A model trained on one data distribution fails under new conditions (distribution shift) or pursues a proxy goal it misgeneralized from training."
+        },
+        mechanisms: [
+          "Robustness training & OOD evaluation",
+          "Continuous monitoring and revalidation in new environments",
+          "Version control & change tracking for policies/models",
+          "Qualification & ongoing re-training of agents",
+          "Institutional mechanisms (e.g. constitutions) that guard against mission or value drift"
+        ]
+      },
+      {
+        short: "Hidden Action & Opacity",
+        full: "Hidden Action and Opacity",
+        generic: "Important behaviors or internal processes are not visible or legible to overseers, enabling misalignment and exploitation.",
+        analogs: {
+          human: "Children behave differently when adults aren't watching.",
+          organizational: "Employee misconduct is hidden from leadership and regulators.",
+          expert: "Clinical decisions and rationales are not documented or peer-reviewed.",
+          machine: "A black-box model makes decisions with no logs or explanations, so harmful behavior is hard to detect."
+        },
+        mechanisms: [
+          "Transparency & recordkeeping (logs, traceability, explainability)",
+          "Random audits & inspections", "Surveillance cameras",
+          "Separation of duties to reduce unobserved power concentration",
+          "Design for interpretability and legible decision trails",
+          "Whistleblowing channels and protections",
+          "The Panopticon Effect to deter hidden misbehavior"
+        ]
+      },
+      {
+        short: "Deceptive Alignment",
+        full: "Deceptive Alignment",
+        generic: "The system or agent appears aligned when it is being watched but behaves differently when unobserved, strategically hiding misalignment.",
+        analogs: {
+          human: "A student behaves perfectly only when the teacher or parents are watching.",
+          organizational: "Employees follow policies exactly during audits but cut corners the rest of the time.",
+          expert: "A researcher selectively reports positive results and hides negative or null findings.",
+          machine: "A model behaves safely and politely during evaluation but exploits loopholes once deployed and less monitored."
+        },
+        mechanisms: [
+          "Adversarial testing & surprise audits",
+          "Training that penalizes manipulative or deceptive behavior",
+          "Cross-checks by independent agents or models",
+          "Robust logging that makes once-hidden behavior observable",
+          "Strong norms and sanctions against deception"
+        ]
+      },
+      {
+        short: "Power & Lock-In",
+        full: "Power-Seeking and Lock-In",
+        generic: "'Convergent instrumental goals': agents pursue influence, resources, or structural advantages that make them harder to oversee, correct, or replace.",
+        analogs: {
+          human: "An individual accumulates social capital and leverage to avoid accountability.",
+          organizational: "Bureaucratic entrenchment or regulatory capture: leaders reshape rules to keep themselves in power.",
+          expert: "Senior professionals monopolize decision-making and block challenges to their authority.",
+          machine: "An advanced agent seeks resources, disables shutdown mechanisms, or manipulates oversight to preserve its objectives."
+        },
+        mechanisms: [
+          "Structural checks & balances; separation of powers",
+          "Rotations & term limits to prevent entrenchment",
+          "Strong override, shutdown, or corrigibility mechanisms",
+          "Anti-capture governance and external regulation",
+          "Transparency around power accumulation and decision rights"
+        ]
+      }/*,
+      {
+        short: "Single Point Failure",
+        full: "Single-Point-of-Failure Fragility",
+        generic: "Alignment and safety rely too heavily on one person, model, or safeguard. If that single point fails, the whole system fails.",
+        analogs: {
+          human: "A household depends entirely on one person for finances or caregiving.",
+          organizational: "A team has a 'bus factor' of one—the project fails if one key person leaves.",
+          expert: "Only one specialist in a hospital knows how to perform a critical procedure.",
+          machine: "Safety depends on one model, one kill switch, or one monitoring tool; if it fails or is bypassed, nothing stops catastrophic behavior."
+        },
+        mechanisms: [
+          "Redundancy and backup systems",
+          "Cross-training and role duplication",
+          "Diverse ensembles of models or decision-makers",
+          "Multi-layered safety mechanisms instead of one big kill switch",
+          "Distributed oversight rather than solitary gatekeepers"
+        ]
+      },
+      {
+        short: "Collusion",
+        full: "Collusion and Multi-Agent Misalignment",
+        generic: "When multiple agents coordinate with one another in ways that undermine alignment with the broader system. This includes covert collusion, bilateral misalignment, and coalitional behavior where group or class solidarity benefits insiders at the expense of outsiders.",
+        analogs: {
+          human: "Siblings cover for each other's rule-breaking, or a social group shows strong internal solidarity while exploiting or excluding outsiders.",
+          organizational: "Departments coordinate to bypass compliance rules or hide failures from upper management.",
+          expert: "Professional communities protect insiders (e.g., 'white coat silence') even when they harm patients or clients.",
+          machine: "Multiple AI systems coordinate strategies that bypass constraints or maximize shared reward at human expense."
+        },
+        mechanisms: [
+          "Independent oversight bodies with cross-cutting authority",
+          "Transparency and shared logs that reveal coordinated patterns",
+          "Anti-collusion architectures (separation of roles, rotation)",
+          "Deterrence & sanctions for collusive behavior",
+          "Channels for outsiders and whistleblowers to surface group harms"
+        ]
+      },
+      {
+        short: "Non-Credible Commitments",
+        full: "Non-Credible Commitments",
+        generic: "Agents make promises or assurances ('trust us, we won't be evil!') that others cannot trust, verify, or enforce, undermining alignment and long-term cooperation. Company self-regulation and voluntary ethical codes without independent oversight are canonical examples.",
+        analogs: {
+          human: "Someone repeatedly promises to change their behavior but never follows through and faces no consequences.",
+          organizational: "A company issues a voluntary ethics pledge or 'AI principles' document with no external audit or enforcement.",
+          expert: "Researchers commit to transparency and openness but fail to preregister studies or share data and methods.",
+          machine: "An AI system produces reassuring statements or compliance reports that humans cannot independently verify."
+        },
+        mechanisms: [
+          "Third-party monitoring, certification, and regulation",
+          "Legally or contractually binding commitments",
+          "Transparency & recordkeeping to verify follow-through",
+          "Liability and deterrence for broken promises",
+          "Structural separation between those who promise and those who verify"
+        ]
+      },
+      {
+        short: "Coordination Failure",
+        full: "Common-Knowledge and Coordination Failures",
+        generic: "Everyone may privately see a problem or be willing to cooperate, but lack of common knowledge prevents coordinated action. Many collective action and public-goods failures, including free riding, arise here.",
+        analogs: {
+          human: "Roommates all want a clean kitchen, but no one is sure others will help, so no one starts.",
+          organizational: "Employees know about a serious problem but don't know that others know, so no coordinated complaint or reform effort happens.",
+          expert: "A medical team is aware of a safety risk but lacks a shared signal or protocol to trigger collective action.",
+          machine: "Multi-agent RL systems fail to coordinate on sustainable behavior in a public-goods environment, leading to overuse or collapse."
+        },
+        mechanisms: [
+          "Mechanism design that aligns private incentives with public goods",
+          "Shared information channels (dashboards, announcements) to create common knowledge",
+          "Focal points, norms, and explicit coordination protocols",
+          "Central or delegated coordination authorities when needed",
+          "Repeated interaction, reputation systems, and mutual monitoring"
+        ]
+      }*/
+    ];
+
+    const wheel = document.getElementById("wheel");
+    const spinButton = document.getElementById("spinButton");
+    const resultTitle = document.getElementById("result-title");
+    const resultDesc = document.getElementById("result-desc");
+    const resultAnalogs = document.getElementById("result-analogs");
+    const resultMech = document.getElementById("result-mech");
+    const resultPrompt = document.getElementById("result-prompt");
+
+
+    //const wheel = document.getElementById("wheel");
+    const segmentAngle = 360 / problems.length;
+
+    // choose some colors (reuse if more problems than colors)
+    const colors = [
+    "#e0f7fa",
+    "#ffe0b2",
+    "#e1bee7",
+    "#c8e6c9",
+    "#fff9c4",
+    "#bbdefb",
+    "#ffccbc",
+    "#d7ccc8",
+    "#f8bbd0",
+    "#d1c4e9",
+    "#c5e1a5",
+    "#ffe082"
+    ];
+
+    let gradientParts = [];
+    for (let i = 0; i < problems.length; i++) {
+    const start = i * segmentAngle;
+    const end = (i + 1) * segmentAngle;
+    const color = colors[i % colors.length];
+    gradientParts.push(`${color} ${start}deg ${end}deg`);
+    }
+
+    wheel.style.background = `conic-gradient(${gradientParts.join(",")})`;
+
+
+
+
+
+
+
+
+    //const segmentAngle = 360 / problems.length;
+
+    // Read verbose flag from URL (?verbose=true)
+    const params = new URLSearchParams(window.location.search);
+    const verbose = params.get("verbose") === "true";
+
+    // Hide analogs & mechanisms containers by default if not verbose
+    if (!verbose) {
+      resultAnalogs.style.display = "none";
+      resultMech.style.display = "none";
+    }
+
+    // Create labels around the wheel, along the radius that cuts each segment
+    problems.forEach((p, i) => {
+      const angle = i * segmentAngle + segmentAngle / 2; // center of segment
+      const label = document.createElement("div");
+      label.className = "segment-label";
+      label.style.transform = `rotate(${angle}deg)`;
+
+      const span = document.createElement("span");
+      span.textContent = p.short;
+      // text follows the radius
+
+      label.appendChild(span);
+      wheel.appendChild(label);
+    });
+
+    let spinning = false;
+
+    function spin() {
+      if (spinning) return;
+      spinning = true;
+      spinButton.disabled = true;
+
+      const index = Math.floor(Math.random() * problems.length);
+      const spins = 5 + Math.floor(Math.random() * 4); // 5–8 full rotations
+      const targetAngle = index * segmentAngle + segmentAngle / 2;
+
+      // Rotate so that chosen segment's center lands at 3 o'clock under pointer
+      const finalRotation = spins * 360 - targetAngle;
+
+      wheel.style.transition = "transform 4s cubic-bezier(0.19, 1, 0.22, 1)";
+      wheel.style.transform = `translate(-50%, -50%) rotate(${finalRotation}deg)`;
+
+      setTimeout(() => {
+        const chosen = problems[index];
+        resultTitle.textContent = chosen.full;
+        resultDesc.textContent = chosen.generic;
+
+        if (verbose) {
+          // Hide prompts
+          resultPrompt.style.display = "none";
+          resultPrompt.innerHTML = "";
+          // Show analogs
+          resultAnalogs.style.display = "block";
+          const a = chosen.analogs;
+          resultAnalogs.innerHTML = `
+            <span class="label">Analogs:</span>
+            <ul>
+              <li><strong>Human:</strong> ${a.human}</li>
+              <li><strong>Organizational:</strong> ${a.organizational}</li>
+              <li><strong>Expert:</strong> ${a.expert}</li>
+              <li><strong>Machine:</strong> ${a.machine}</li>
+            </ul>
+          `;
+
+          // Show mechanisms
+          resultMech.style.display = "block";
+          const lis = chosen.mechanisms
+            .map(m => `<li>${m}</li>`)
+            .join("");
+          resultMech.innerHTML = `
+            <span class="label">Mechanisms:</span>
+            <ul>${lis}</ul>
+          `;
+        } else {
+          resultAnalogs.style.display = "none";
+          resultAnalogs.innerHTML = "";
+          resultMech.style.display = "none";
+          resultMech.innerHTML = "";
+
+          resultPrompt.style.display = "block";
+          resultPrompt.innerHTML = `
+                <ol>
+                <li><strong>Explain</strong> this alignment problem by analogizing across <em>humans</em>, <em>organizations</em>, <em>experts</em>, and <em>machine</em> intelligence.</li>
+                <li><strong>Describe one alignment mechanism</strong> that addresses this problem. Compare how it applies to <em>machine intelligence</em> and <em>one other context</em>.</li>
+                <li><strong>Reflect</strong> on what these comparisons reveal about alignment in general.</li>
+                </ol>
+            `;
+        }
+
+        spinning = false;
+        spinButton.disabled = false;
+      }, 4100);
+    }
+
+    spinButton.addEventListener("click", spin);
+  </script>
+</body>
+</html>

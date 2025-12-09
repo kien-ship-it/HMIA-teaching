@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Select by Tag - Stop + Think</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 1em;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #ffffff;
+    }
+
+    #tag-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25em;
+      justify-content: center;
+      margin-bottom: 1em;
+    }
+
+    .tag-button {
+      padding: 0.25em 1em;
+      font-size: 0.7em;
+      border: 1px solid #ccc;
+      background-color: #f0f0f0;
+      cursor: pointer;
+    }
+
+    .tag-button.selected {
+      background-color: #d0eaff;
+      border-color: #377437ff;
+    }
+
+    #get-questions {
+      margin: 1em;
+      font-size: 1em;
+    }
+
+    .question-preview {
+      max-width: 600px;
+      margin: 1em 0;
+      padding: 1em;
+      border: 1px solid #ddd;
+      background-color: #f9f9f9;
+    }
+
+    .question-preview strong {
+      color: #ba372a;
+    }
+  </style>
+  <script src="stop_and_think.js"></script>
+</head>
+<body>
+  <h2>Select Tags</h2>
+  <div id="tag-container"></div>
+  <button id="get-questions">Get Questions</button>
+  <div id="questions"></div>
+<div id="iframe-wrapper" style="margin-top: 2em; display: none;">
+  <h3>🧠 Your Stop + Think Session</h3>
+  <iframe id="question-iframe" width="800" height="600" style="border: 1px solid #ccc;"></iframe>
+</div>
+
+  <script>
+    window.addEventListener("load", () => {
+      const tags = new Set();
+      window.stopThinkQuestions.forEach(q => {
+        if (Array.isArray(q.tags)) {
+          q.tags.forEach(tag => tags.add(tag));
+        }
+      });
+
+      const sortedTags = Array.from(tags).sort();  // alphabetically sorted
+
+      const tagContainer = document.getElementById("tag-container");
+      sortedTags.forEach(tag => {
+        const btn = document.createElement("button");
+        btn.className = "tag-button";
+        btn.textContent = tag;
+        btn.onclick = () => {
+          btn.classList.toggle("selected");
+        };
+        tagContainer.appendChild(btn);
+      });
+
+      document.getElementById("get-questions").onclick = () => {
+        const selectedTags = Array.from(document.querySelectorAll(".tag-button.selected")).map(btn => btn.textContent);
+        const matched = window.stopThinkQuestions.filter(q => q.tags && q.tags.some(tag => selectedTags.includes(tag)));
+
+        const output = document.getElementById("questions");
+        output.innerHTML = "";
+
+        /*matched.forEach(q => {
+          const div = document.createElement("div");
+          div.className = "question-preview";
+          div.innerHTML = `<strong>${q.number}</strong>: ${q.question}`;
+          output.appendChild(div);
+        });*/
+
+        const paramString = matched.map(q => q.number).join(",");
+
+        const iframeWrapper = document.getElementById("iframe-wrapper");
+        const iframe = document.getElementById("question-iframe");
+        iframe.src = `index.html?q=${paramString}&i=0`;
+        iframeWrapper.style.display = "block";
+
+        iframe.onload = () => {
+        iframe.scrollIntoView({ behavior: "smooth" });
+        };
+
+        //jumpLink.style.display = "block";
+        //jumpLink.style.marginTop = "1em";
+        //output.appendChild(jumpLink);
+      };
+    });
+  </script>
+</body>
+</html>

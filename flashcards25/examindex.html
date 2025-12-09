@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spaced Practice – Exam Mode</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 2em 1em;
+      background: #fefefe;
+      box-sizing: border-box;
+    }
+
+    .card-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      perspective: 1000px;
+      box-sizing: border-box;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 420px;
+      height: 600px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      /* transition left in case you want to re-enable flip later */
+      transition: transform 0.6s;
+      transform-style: preserve-3d;
+      will-change: transform;
+    }
+
+    .card-front,
+    .card-back {
+      position: absolute;
+      width: calc(100% - 10%);
+      height: 100%;
+      top: 0;
+      box-sizing: border-box;
+      backface-visibility: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1em;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      background: white;
+    }
+
+    .card-front {
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 2em;
+      text-align: center;
+    }
+
+    /* Back is never shown in exam mode, but we keep it harmlessly empty */
+    .card-back {
+      left: 5%;
+      transform: rotateY(180deg);
+      background: #e6f5e6;
+      color: #2d572c;
+      font-style: italic;
+    }
+
+    .controls {
+      margin-top: 3em;
+      z-index: 2;
+      position: relative;
+    }
+
+    .controls button {
+      margin-right: 10px;
+      font-size: 2em;
+      padding: 0.5em 1em;
+    }
+  </style>
+</head>
+<body>
+  <p id="pageTitle"></p>
+
+  <div class="card-wrapper">
+    <div class="card" id="card">
+      <div class="card-inner" id="cardInner">
+        <div class="card-front" id="cardFront">Loading...</div>
+        <div class="card-back" id="cardBack"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="resetBtn" style="display: inline-block;">🔁 Reset Deck</button>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const dataFile = params.get('data') || 'none';
+    const tag = params.get('tag') || 'none';
+
+    const script = document.createElement('script');
+    script.src = `${dataFile}.js`;
+
+    script.onload = () => {
+      if (!window.flashcardData) {
+        document.getElementById('cardFront').innerText =
+          `No data found in ${dataFile}.js`;
+        return;
+      }
+
+      document.getElementById("pageTitle").textContent =
+        window.topicHeading || "Flashcards";
+
+      const flashcards = window.flashcardData;
+      let filteredCards;
+
+      if (tag !== 'none') {
+        filteredCards = flashcards.filter(card => card.tags.includes(tag));
+      } else {
+        filteredCards = flashcards;
+      }
+
+      let currentIndex = null;
+      let usedIndices = new Set();
+      const frontEl = document.getElementById("cardFront");
+      const cardEl = document.getElementById("card");
+
+      function nextCard() {
+        // If we've exhausted the deck, prompt reset
+        if (usedIndices.size === filteredCards.length) {
+          frontEl.innerText = "🎉 You've completed all cards!\nClick Reset to start over.";
+          document.getElementById('resetBtn').style.display = 'inline-block';
+          return;
+        }
+
+        // Hide reset while in the middle of a run
+        document.getElementById('resetBtn').style.display = 'none';
+
+        // Choose a random unused index
+        const unused = filteredCards
+          .map((_, i) => i)
+          .filter(i => !usedIndices.has(i));
+
+        currentIndex = unused[Math.floor(Math.random() * unused.length)];
+        frontEl.innerText = filteredCards[currentIndex].question;
+      }
+
+      // Exam behavior: clicking the card advances to the next one
+      cardEl.addEventListener("click", () => {
+        // If deck is done, do nothing until reset
+        if (usedIndices.size === filteredCards.length) return;
+
+        // Mark current card as used, then go to next
+        if (currentIndex !== null) {
+          usedIndices.add(currentIndex);
+        }
+        nextCard();
+      });
+
+      document.getElementById('resetBtn').onclick = () => {
+        usedIndices.clear();
+        nextCard();
+      };
+
+      // Start the first card
+      nextCard();
+    };
+
+    script.onerror = () => {
+      document.getElementById('cardFront').innerText =
+        `Could not load ${dataFile}.js`;
+    };
+
+    document.head.appendChild(script);
+  </script>
+</body>
+</html>

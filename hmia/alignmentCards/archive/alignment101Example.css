@@ -1,0 +1,27 @@
+/* Optional styles to pair with the simplified renderer */
+.list-header {
+  font-weight: 600;
+  font-size: 1.25rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.card-block {
+  border: 1px solid #e6e6e6;
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 0 0 1rem;
+  background: #fff;
+}
+
+.card-name {
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.card-definition,
+.card-failure,
+.card-example {
+  margin: 0.25rem 0;
+  line-height: 1.4;
+}

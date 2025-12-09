@@ -1,0 +1,85 @@
+body {
+  background-color: #ffffff;
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+}
+
+/* Grid container for portrait-mode cards */
+.portrait-mode .card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  padding: 20px;
+}
+
+/* Individual portrait-style cards */
+.portrait-card {
+  background-color: #f8f8f8;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  text-align: center;
+  padding: 10px;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.portrait-card:hover {
+  background-color: #e6f0ff;
+  transform: scale(1.03);
+}
+
+/* Expanded card view */
+.expanded-card {
+  width: 80%;
+  margin: 30px auto;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  padding: 20px;
+  cursor: pointer;
+}
+
+.expanded-card h2 {
+  text-align: center;
+  margin-top: 0;
+}
+
+.expanded-card .definition {
+  font-style: italic;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* .exemplars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+}
+
+.exemplar {
+  width: 100%;
+  background: #f4f4f4;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+  word-break: break-word;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.explanationsText p {
+  margin: 8px 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+} */

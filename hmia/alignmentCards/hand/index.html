@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Alignment Cards — Thumbs + Overlay</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <div class="title">Alignment Cards — Selected</div>
+    <div class="filters">
+      Selected via <code>?names=</code> URL parameter.
+      <div id="chipbox" class="chips"></div>
+    </div>
+  </header>
+
+  <main>
+    <div id="loading" class="empty">Loading <code>../original/data.js</code>…</div>
+    <div id="grid" class="grid" role="list"></div>
+    <div id="empty" class="empty" hidden>No matching cards. Check the <code>names</code> parameter.</div>
+  </main>
+
+  <div id="overlay" class="overlay" aria-hidden="true">
+    <article id="detail" class="card" role="dialog" aria-modal="true"></article>
+  </div>
+
+<!-- Attempt 1: classic script that defines global `cards` / `categories` -->
+<script src="../original/data.js"></script>
+
+<!-- Attempt 2: module import fallback (handles `export const cards` style) -->
+<script type="module">
+  try {
+    // Only import if globals not provided by classic script
+    if (!('cards' in window) || !('categories' in window)) {
+      const mod = await import('../original/data.js');
+      if (mod) {
+        // Prefer explicit exports if present, else fall back to any globals the module might set
+        window.cards = mod.cards || window.cards;
+        window.categories = mod.categories || window.categories;
+      }
+    }
+  } catch (e) {
+    console.warn('Module import of ../original/data.js failed (this is OK if classic script worked):', e);
+  } finally {
+    window.dispatchEvent(new Event('cards-data-ready'));
+  }
+</script>
+
+<script>
+(function(){
+  // Wait for data to be available (either global or module import)
+  function onReady(fn){
+    console.log('Data Ready')
+    if (Array.isArray(window.cards) && Array.isArray(window.categories)) return fn();
+    window.addEventListener('cards-data-ready', fn, { once: true });
+  }
+
+  onReady(() => {
+  // === Data wiring ==========================================================
+  // Loaded from ./data.js (either as globals or via module exports)
+  const cardsData = window.cards || [];
+  const catsData = window.categories || [];
+  const catByCode = Object.fromEntries(catsData.map(c=>[c.code, c]));
+
+  console.log('[cards] loaded:', Array.isArray(window.cards) ? window.cards.length : 'missing');
+  console.log('[categories] loaded:', Array.isArray(window.categories) ? window.categories.length : 'missing');
+
+
+  // === URL helpers ==========================================================
+  const params = new URLSearchParams(location.search);
+  const namesParamRaw = params.get('names') || '';
+  const namesList = namesParamRaw
+    .split(',')
+    .map(s=>decodeURIComponent(s).trim())
+    .filter(Boolean);
+
+  // Let's be robust to stray unicode, etc.
+  const norm = s => (s||'').toLowerCase().normalize('NFKD');
+
+  // Fallback: if no names provided, show all cards
+  const wantAll = namesList.length === 0;
+  const wantedSet = new Set(namesList.map(n=>norm(n)));
+
+  console.log('names param: ', namesList);
+  console.log(`wantAll is ${wantAll ? 'true' : 'false'}`);
+
+  // === Filter ===============================================================
+  function selectCards(){
+    if (wantAll) return cardsData.slice();
+    return cardsData.filter(c => wantedSet.has(norm(c.name)));
+  }
+
+  // === Render thumbnails ====================================================
+  const grid = document.getElementById('grid');
+  const empty = document.getElementById('empty');
+  const chipbox = document.getElementById('chipbox');
+
+  function renderChips(){
+    chipbox.innerHTML = '';
+    const list = wantAll ? cardsData.map(c=>c.name) : namesList;
+    list.forEach(n => {
+      const el = document.createElement('span');
+      el.className = 'chip';
+      el.textContent = n;
+      chipbox.appendChild(el);
+    });
+  }
+
+  function renderThumbs(items){
+    grid.innerHTML='';
+    if(items.length===0){ empty.hidden=false; return; }
+    empty.hidden=true;
+    items.forEach(c => {
+      const article = document.createElement('article');
+      article.className = 'thumb';
+      article.setAttribute('role','listitem');
+      article.tabIndex = 0;
+
+      const badge = document.createElement('span');
+      badge.className = 'badge';
+      const cat = catByCode[c.category];
+      if(cat){
+        badge.textContent = cat.name;
+        badge.style.background = cat.color || '#f1f3f5';
+      } else {
+        badge.textContent = c.category || '—';
+      }
+      article.appendChild(badge);
+
+      const title = document.createElement('h4');
+      title.textContent = c.name;
+      article.appendChild(title);
+
+      const open = () => showDetail(c);
+      article.addEventListener('click', open);
+      article.addEventListener('keydown', e=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); open(); }});
+
+      grid.appendChild(article);
+    });
+  }
+
+  // === Overlay detail view ==================================================
+  const overlay = document.getElementById('overlay');
+  const detail = document.getElementById('detail');
+
+  function showDetail(card){
+    detail.innerHTML = '';
+
+    // Header
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    const cat = catByCode[card.category] || {name: card.category || '—', color:'#f1f3f5'};
+    const catEl = document.createElement('span');
+    catEl.className='cat';
+    catEl.textContent = cat.name;
+    catEl.style.background = cat.color || '#f1f3f5';
+    meta.appendChild(catEl);
+    detail.appendChild(meta);
+
+    const h2 = document.createElement('h2');
+    h2.textContent = card.name;
+    detail.appendChild(h2);
+
+    if(card.definition){
+      const def = document.createElement('div');
+      def.className='def';
+      def.textContent = card.definition;
+      detail.appendChild(def);
+    }
+
+    const sections = document.createElement('div');
+    sections.className = 'sections';
+    const fields = [
+      ['human','Human'],
+      ['organizational','Organizational'],
+      ['professional','Professional'],
+      ['machine','Machine']
+    ];
+    fields.forEach(([key,label])=>{
+      if(card[key]){
+        const s = document.createElement('section');
+        s.className='sect';
+
+        // relaxed layout
+        // const h = document.createElement('h3');
+        // h.textContent = label;
+        // const p = document.createElement('p');
+        // p.textContent = card[key];
+        // s.append(h,p);
+
+        // compact layout
+        const p = document.createElement('p');
+        // create bold label inline
+        const strong = document.createElement('strong');
+        strong.textContent = label + ': ';
+        p.appendChild(strong);
+        p.append(card[key]); // append the actual text right after the bold label
+        s.appendChild(p);
+ 
+        sections.appendChild(s);
+      }
+    });
+
+    // Optional long-form expand content
+    // if(card.expand && typeof card.expand === 'object'){
+    //   for(const [label,text] of Object.entries(card.expand)){
+    //     if(!text) continue;
+    //     const s = document.createElement('section');
+    //     s.className='sect';
+
+        // const h = document.createElement('h3');
+        // h.textContent = label[0].toUpperCase()+label.slice(1);
+        // const p = document.createElement('p');
+        // p.textContent = text;
+        // s.append(h,p);
+
+    //     const p = document.createElement('p');
+    //     const strong = document.createElement('strong');
+    //     strong.textContent = label + ': ';
+    //     p.appendChild(strong);
+    //     p.append(text); 
+    //     s.appendChild(p);
+
+    //     sections.appendChild(s);
+    //   }
+    //}
+
+    // Optional long-form expand content
+    if (card.expand && typeof card.expand === 'object') {
+    const expandKeys = Object.entries(card.expand).filter(([_, text]) => !!text);
+    if (expandKeys.length) {
+        // Add a small heading above the expanded entries
+        const heading = document.createElement('div');
+        heading.className = 'expand-heading';
+        heading.textContent = 'Expanded Details';  // or "More Detail", "Expanded Notes", etc.
+        sections.appendChild(heading);
+
+        expandKeys.forEach(([label, text]) => {
+        const s = document.createElement('section');
+        s.className = 'sect';
+
+        const p = document.createElement('p');
+        const strong = document.createElement('strong');
+        strong.textContent = label.charAt(0).toUpperCase() + label.slice(1) + ': ';
+        p.appendChild(strong);
+        p.append(text);
+        s.appendChild(p);
+        sections.appendChild(s);
+        });
+    }
+    }
+
+
+    if(sections.childElementCount) detail.appendChild(sections);
+
+    const hint = document.createElement('div');
+    hint.className = 'close-hint';
+    hint.textContent = 'Click anywhere to close, or press Esc.';
+    detail.appendChild(hint);
+
+    overlay.classList.add('show');
+    overlay.setAttribute('aria-hidden','false');
+    history.replaceState(null,'', withHash(card.name));
+  }
+
+  function hideDetail(){
+    overlay.classList.remove('show');
+    overlay.setAttribute('aria-hidden','true');
+    // remove hash but preserve query
+    history.replaceState(null,'', location.pathname + location.search);
+  }
+
+  overlay.addEventListener('click', hideDetail);
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') hideDetail(); });
+
+  // Support deep-linking via #Name
+  function withHash(name){ return location.pathname + location.search + '#' + encodeURIComponent(name); }
+  function tryOpenFromHash(){
+    const h = decodeURIComponent(location.hash.replace(/^#/,'')).trim();
+    if(!h) return;
+    const found = currentItems.find(c => (c.name||'').toLowerCase() === h.toLowerCase());
+    if(found) showDetail(found);
+  }
+
+  // === Boot ================================================================
+  renderChips();
+  const currentItems = selectCards();
+  renderThumbs(currentItems);
+  tryOpenFromHash();
+
+  // Hide loader if present
+  const loading = document.getElementById('loading');
+  if (loading) loading.remove();
+  }); // end onReady
+})();
+</script>
+</body>
+</html>

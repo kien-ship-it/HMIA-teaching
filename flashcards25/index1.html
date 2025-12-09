@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spaced Practice</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+    #card {
+      background: white;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      padding: 2rem;
+      max-width: 600px;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    #answer {
+      display: none;
+      margin-top: 1rem;
+      font-style: italic;
+      color: #2c662d;
+    }
+    #controls {
+      margin-top: 1.5rem;
+    }
+    button {
+      margin: 0 0.5rem;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 5px;
+      background-color: #4CAF50;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    #retireBtn {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1 id="pageTitle"></h1>
+  <div id="card">Click to reveal answer</div>
+  <div id="answer"></div>
+  <div id="controls">
+    <button onclick="nextCard()">Next</button>
+    <button id="retireBtn" onclick="retireCard()">Got it right</button>
+    <button id="resetBtn" style="display: none;">🔁 Reset Deck</button>
+  </div>
+
+
+<script>
+
+  const params = new URLSearchParams(window.location.search);
+  const dataFile = params.get('data') || 'none';
+  //const dataFile = params.get('data') || 'collins01';
+  const tag = params.get('tag') || 'none';
+
+  const script = document.createElement('script');
+  script.src = `${dataFile}.js`;
+
+  //const pageTitleH1 = document.getElementById("pageTitle");
+  //pageTitleH1.innerText = pageTitleH1.innerText + ' ' + dataFile;
+
+  script.onload = () => {
+    if (!window.flashcardData) {
+      document.getElementById('card').innerText = `No data found in ${dataFile}.js`;
+      return;
+    }
+
+    document.getElementById("pageTitle").textContent = 'Spaced Practice for ' + (window.topicHeading || "this Class");
+
+    const flashcards = window.flashcardData;
+    let filteredCards;
+
+    if (tag !== 'none') {
+      filteredCards = flashcards.filter(card => card.tags.includes(tag));
+    }
+    else { 
+      filteredCards = flashcards; 
+    }
+
+    let currentIndex = null;
+    let usedIndices = new Set();
+
+    function nextCard() {
+      document.getElementById('answer').style.display = 'none';
+      document.getElementById('retireBtn').style.display = 'none';
+
+      if (usedIndices.size === filteredCards.length) {
+        document.getElementById('card').innerText = "🎉 You've completed all cards!";
+        document.getElementById('answer').innerText = '';
+        document.getElementById('resetBtn').style.display = 'inline-block';
+        return;
+      }
+
+      do {
+        currentIndex = Math.floor(Math.random() * filteredCards.length);
+      } while (usedIndices.has(currentIndex));
+
+      document.getElementById('card').innerText = filteredCards[currentIndex].question;
+    }
+
+    function retireCard() {
+      usedIndices.add(currentIndex);
+      nextCard();
+    }
+
+    document.getElementById('card').addEventListener('click', () => {
+      const a = filteredCards[currentIndex].answer;
+      const answerEl = document.getElementById('answer');
+      answerEl.innerText = a;
+      answerEl.style.display = 'block';
+      document.getElementById('retireBtn').style.display = 'inline-block';
+    });
+
+    document.getElementById('retireBtn').onclick = retireCard;
+    window.nextCard = nextCard;
+    document.getElementById('resetBtn').onclick = () => {
+      usedIndices.clear();
+      document.getElementById('resetBtn').style.display = 'none';
+      nextCard();
+    };
+
+    nextCard();
+  };
+
+  script.onerror = () => {
+    document.getElementById('card').innerText = `Could not load ${dataFile}.js`;
+  };
+
+  document.head.appendChild(script);
+</script>
+
+</body>
+</html>

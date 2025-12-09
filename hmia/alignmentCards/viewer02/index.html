@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Alignment Cards Wrapper (+categories)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root { font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; }
+    body { margin: 0; background: #fafafa; color: #222; }
+    header { padding: 12px 16px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.08); position: sticky; top: 0; z-index: 1; }
+    form { display: grid; grid-template-columns: repeat(12, minmax(0,1fr)); gap: 32px; align-items: end; }
+    label { font-size: 12px; color: #444; display: block; margin-bottom: 4px; }
+    input[type="text"], select { width: 100%; padding: 8px 10px; border: 1px solid #d0d0d0; border-radius: 8px; background: #fff; }
+    select[multiple] { height: 92px; }
+    .btn { padding: 10px 14px; border: 1px solid #1b74e4; background: #1b74e4; color: #fff; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    .btn.secondary { background: #fff; color: #1b74e4; }
+    .col-3 { grid-column: span 3; }
+    .col-2 { grid-column: span 2; }
+    .col-1 { grid-column: span 1; }
+    .col-4 { grid-column: span 4; }
+    .muted { color: #666; font-size: 12px; }
+    #urlbar { margin-top: 8px; display: flex; gap: 8px; align-items: center; overflow: hidden; }
+    #builtUrl { flex: 1; padding: 8px 10px; background: #f3f5f7; border-radius: 8px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; overflow-x: auto; }
+    main { height: calc(100vh - 140px); }
+    iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+  </style>
+</head>
+<body>
+
+<header>
+  <form id="controls">
+    <div class="col-2">
+      <label for="user">User</label>
+      <select id="user">
+        <option value="djjr">djjr</option>
+        <option value="arif24v">Arif Vempalle</option>
+        <option value="angelag13">Angela Guo</option>
+        <option value="Michellewang375">Michelle Wang</option>
+        <option value="shreyasi-23">Shreyasi Poddar</option>
+        <option value="SomeN00b101">Anthony Shen</option>
+        <option value="AshleyLuoYX">Ashley Luo</option>
+        <option value="madhu24raj">Madhumitha Rajaprakash</option>
+        <option value="naavyaj-29">Naavya Jain</option>
+        <option value="antisignal">Alexandra Dill</option>
+        <option value="adyyd">Alex Dong</option>
+        <option value="Parshwa0926">Parshwa Shah</option>
+        <option value="kalk-ak">Kaleb Aklilu</option>
+        <option value="adikondepudi">Adi Kondepudi</option>
+        <option value="liadenh">Aden Li</option>
+        <option value="evodychko">Elena Vodychko</option>
+        <option value="kien-ship-it">Kien Le</option>
+        <option value="GoldyMoon">Jinduo Guo</option>
+        <option value="cynthiawoxoy">Cynthia Wang</option>
+        <option value="tayseerk">Tayseer Karrossi</option>
+        <option value="riatalwar">Ria Talwar</option>
+        <option value="ramlukn">Nikhil Ramlukan</option>
+        <option value="stonehj05">Haojun Shi</option>
+        <option value="darcy-long">Darcy Long</option>
+        <option value="JunzheShi0702">Junzhe Shi</option>
+        <option value="2derpy">Henry Tang</option>
+        <option value="ymandoesnotexist">Yonathan Shanko</option>
+        <option value="edsumpena">Edmund Sumpena</option>
+      </select>
+    </div>
+
+    <div class="col-1">
+      <label>&nbsp;</label>
+      <div style="display: flex; gap: 4px;">
+        <button type="button" id="prevStudent" class="btn secondary" style="padding: 8px 12px;" title="Previous student">Prev</button>
+        <button type="button" id="nextStudent" class="btn secondary" style="padding: 8px 12px;" title="Next student">Next</button>
+      </div>
+    </div>
+
+    <div class="col-3">
+      <label for="file">File (module name, no .js)</label>
+      <input id="file" type="text" placeholder="e.g. testfile2" />
+    </div>
+
+    <div class="col-2">
+      <label for="category">Category (manual)</label>
+      <input id="category" type="text" placeholder="e.g. AP,TR" />
+    </div>
+
+    <div class="col-3">
+      <label for="catSelect">Categories (from deck)</label>
+      <select id="catSelect" multiple></select>
+      <div class="muted">Hold Cmd/Ctrl to multi-select</div>
+    </div>
+
+    <div class="col-1">
+      <label for="cachebust">Cache-bust</label>
+      <select id="cachebust">
+        <option value="">off</option>
+        <option value="ts">ts</option>
+      </select>
+    </div>
+
+    <div class="col-2">
+      <label for="style">Renderer</label>
+      <select id="style">
+        <option value="grid">Grid</option>
+        <option value="hier">Hierarchical</option>
+        <option value="table">Table</option>
+      </select>
+    </div>
+
+    <div class="col-2">
+      <button class="btn" type="submit">Load</button>
+    </div>
+
+    <div class="col-2">
+      <button class="btn secondary" type="button" id="openNew">Open in new tab</button>
+    </div>
+
+    <div class="col-2">
+      <button class="btn secondary" type="button" id="openGitHub">Open GitHub</button>
+    </div>
+  </form>
+
+  <div id="urlbar">
+    <div id="builtUrl" title="Constructed URL"></div>
+    <span class="muted">app iframe below ↓</span>
+  </div>
+</header>
+
+<main>
+  <iframe id="preview" src="about:blank" referrerpolicy="no-referrer"></iframe>
+</main>
+
+<script type="module">
+  //const APP_BASE = "http://localhost:8000/teaching/hmia/alignmentCards/v06/index.html";
+  const APP_BASE = "https://innoeduvation.org/danryan/production/teaching/hmia/alignmentCards/v06/index.html";
+  const RAW_BASE = (user, file) =>
+    `https://raw.githubusercontent.com/${encodeURIComponent(user)}/alignment-cards/refs/heads/main/${encodeURIComponent(file)}.js`;
+
+  // DOM helpers
+  const $ = id => document.getElementById(id);
+  const userEl = $('user'), fileEl = $('file'), catEl = $('category'), catSelect = $('catSelect');
+  const cacheEl = $('cachebust'), form = $('controls'), iframe = $('preview'), urlOut = $('builtUrl'), openNew = $('openNew');
+  const styleEl = $('style');
+
+  // prefill from wrapper query
+  const qp = new URLSearchParams(location.search);
+  if (qp.has('user')) userEl.value = qp.get('user');
+  if (qp.has('file')) fileEl.value = qp.get('file');
+  if (qp.has('category')) catEl.value = qp.get('category');
+  if (qp.has('cachebust')) cacheEl.value = qp.get('cachebust');
+  if (qp.has('style')) styleEl.value = qp.get('style'); // NEW
+
+  // Build app URL
+  function buildUrl({ user, file, category, cachebust, style }) {
+    const params = new URLSearchParams();
+    if (user) params.set('user', user);
+    if (file) params.set('file', file);
+    if (category) params.set('category', category);
+    if (style) params.set('style', style);      // NEW
+    if (cachebust === 'ts') params.set('_t', String(Date.now()));
+    return `${APP_BASE}?${params.toString()}`;
+  }
+
+  // Load deck module just to read `categories`
+  async function loadDeckCategories(user, file) {
+    const url = RAW_BASE(user, file);
+    const resp = await fetch(url, { cache: 'no-store' });
+    if (!resp.ok) throw new Error(`Fetch failed: ${resp.status}`);
+    const code = await resp.text();
+    const blobURL = URL.createObjectURL(new Blob([code], { type: 'application/javascript' }));
+    try {
+      const mod = await import(blobURL);
+      return Array.isArray(mod.categories) ? mod.categories : [];
+    } finally {
+      URL.revokeObjectURL(blobURL);
+    }
+  }
+
+  // Populate the multi-select from deck categories
+  async function refreshCategorySelect() {
+    const user = userEl.value.trim();
+    const file = fileEl.value.trim();
+    catSelect.innerHTML = '';
+    if (!user || !file) return;
+
+    try {
+      const cats = await loadDeckCategories(user, file);
+      if (!cats.length) {
+        const opt = document.createElement('option');
+        opt.textContent = '(no categories in deck)';
+        opt.disabled = true;
+        catSelect.appendChild(opt);
+        return;
+      }
+      // Build options
+      const selectedCodes = (catEl.value || '').split(/[,|]/).map(s => s.trim().toLowerCase()).filter(Boolean);
+      cats.forEach(c => {
+        const code = String(c.code ?? '').trim();
+        if (!code) return;
+        const opt = document.createElement('option');
+        opt.value = code;
+        opt.textContent = `${code} — ${c.name ?? ''}`.trim();
+        if (selectedCodes.includes(code.toLowerCase())) opt.selected = true;
+        catSelect.appendChild(opt);
+      });
+    } catch (e) {
+      const opt = document.createElement('option');
+      opt.textContent = '(failed to load categories)';
+      opt.disabled = true;
+      catSelect.appendChild(opt);
+      console.error(e);
+    }
+  }
+
+  // Sync multi-select -> text box
+  function syncSelectToInput() {
+    const sel = Array.from(catSelect.selectedOptions).map(o => o.value);
+    catEl.value = sel.join(',');
+  }
+
+  // Sync text box -> multi-select
+  function syncInputToSelect() {
+    const codes = (catEl.value || '').split(/[,|]/).map(s => s.trim().toLowerCase()).filter(Boolean);
+    Array.from(catSelect.options).forEach(o => {
+      o.selected = codes.includes(o.value.toLowerCase());
+    });
+  }
+
+  // Load iframe + update URL bar + update wrapper query
+  function load() {
+    const user = userEl.value.trim();
+    const file = fileEl.value.trim();
+    const category = catEl.value.trim();
+    const cachebust = cacheEl.value;
+    const style = styleEl.value; // NEW
+
+    const url = buildUrl({ user, file, category, cachebust, style });
+    urlOut.textContent = url;
+    iframe.src = url;
+
+    const wrapperQS = new URLSearchParams({ user, file, category, cachebust, style });
+    history.replaceState(null, '', `${location.pathname}?${wrapperQS.toString()}`);
+  }
+
+  // Events
+  form.addEventListener('submit', e => { e.preventDefault(); load(); });
+  openNew.addEventListener('click', () => {
+    const url = urlOut.textContent.trim();
+    if (url) window.open(url, '_blank', 'noopener');
+  });
+
+  // open GitHub profile
+  const openGitHub = $('openGitHub');
+  openGitHub.addEventListener('click', () => {
+    const user = userEl.value.trim();
+    if (user) window.open(`https://github.com/${user}`, '_blank', 'noopener');
+  });
+
+  // prev/next student navigation
+  const prevBtn = $('prevStudent');
+  const nextBtn = $('nextStudent');
+
+  function navigateStudent(direction) {
+    const options = Array.from(userEl.options);
+    const currentIndex = userEl.selectedIndex;
+    let newIndex = currentIndex + direction;
+
+    // Find next valid student (skip empty GitHub IDs)
+    while (newIndex >= 0 && newIndex < options.length) {
+      if (options[newIndex].value.trim() !== '') {
+        userEl.selectedIndex = newIndex;
+        refreshCategorySelect();
+        load();
+        updateNavButtons();
+        return;
+      }
+      newIndex += direction;
+    }
+    
+    // if we reach here, we hit the boundary, just update button states
+    updateNavButtons();
+  }
+
+  function updateNavButtons() {
+    const options = Array.from(userEl.options);
+    const currentIndex = userEl.selectedIndex;
+    
+    let hasPrev = false;
+    for (let i = currentIndex - 1; i >= 0; i--) {
+      if (options[i].value.trim() !== '') {
+        hasPrev = true;
+        break;
+      }
+    }
+    
+    let hasNext = false;
+    for (let i = currentIndex + 1; i < options.length; i++) {
+      if (options[i].value.trim() !== '') {
+        hasNext = true;
+        break;
+      }
+    }
+    
+    prevBtn.disabled = !hasPrev;
+    nextBtn.disabled = !hasNext;
+    prevBtn.style.opacity = hasPrev ? '1' : '0.4';
+    nextBtn.style.opacity = hasNext ? '1' : '0.4';
+    prevBtn.style.cursor = hasPrev ? 'pointer' : 'not-allowed';
+    nextBtn.style.cursor = hasNext ? 'pointer' : 'not-allowed';
+  }
+
+  prevBtn.addEventListener('click', () => navigateStudent(-1));
+  nextBtn.addEventListener('click', () => navigateStudent(1));
+
+  // when user or file or style changes, refresh categories list
+  userEl.addEventListener('change', () => {
+    refreshCategorySelect();
+    updateNavButtons();
+  });
+  fileEl.addEventListener('change', refreshCategorySelect);
+  styleEl.addEventListener('change', load);
+
+
+  // Keep select and input in sync
+  catSelect.addEventListener('change', () => { syncSelectToInput(); load(); });
+  catEl.addEventListener('change', () => { syncInputToSelect(); load(); });
+
+  // Initial boot
+  await refreshCategorySelect();
+  updateNavButtons();
+  if (qp.has('user') || qp.has('file') || qp.has('category')) load();
+</script>
+
+</body>
+</html>

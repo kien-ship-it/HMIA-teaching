@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Alignment Cards</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; padding: 1rem; }
+    h1 { font-size: 1.4rem; margin: 0 0 .75rem; }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+    article.card { border: 1px solid #ddd; border-radius: 10px; padding: 12px; background: #fff; }
+    article.card h4 { margin: 0 0 .5rem; }
+    article.card .card-body h5 { margin: .75rem 0 .35rem; font-size: .95rem; }
+    .kv { display: grid; grid-template-columns: 32% 1fr; gap: 8px; align-items: start; padding: 4px 0; }
+    .kv .label { font-weight: 600; color: #444; }
+    .kv .value { color: #222; }
+    article.card { border-left: 8px solid var(--card-accent, #cfe9ff); }
+  </style>
+  <link rel="stylesheet" href="./src/styles.css">
+</head>
+<body>
+  <h1 id="pageTitle">Alignment Cards</h1>
+  <div id="card-grid-container"></div>
+
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>

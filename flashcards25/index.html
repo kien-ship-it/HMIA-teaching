@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spaced Practice</title>
+<style>
+body {
+  margin: 0;
+  font-family: sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start; /* or center if you want vertical centering */
+  padding: 2em 1em;
+  background: #fefefe;
+  box-sizing: border-box;
+}
+
+.card-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    perspective: 1000px;
+    box-sizing: border-box;
+    }
+
+  .card {
+    width: 100%;
+    max-width: 420px;
+    height: 600px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1; /* Make sure card stays above background, but below controls */
+  }
+
+  /*@media (max-width: 600px) {
+    .card {
+      height: 420px; 
+    }
+  } */
+
+  /* debugging 
+.card {
+  outline: 1px dashed red;
+}*/
+
+
+  .card-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+   /* cursor: pointer;*/
+    will-change: transform;
+  }
+
+  .card.flipped .card-inner {
+    transform: rotateY(180deg);
+  }
+
+
+.card-front,
+.card-back {
+  position: absolute;
+  width: calc(100% - 10%);
+  height: 100%;
+  /*left: 50%;*/
+  top: 0;
+  /*transform: translateX(-50%);*/
+  box-sizing: border-box;
+  backface-visibility: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1em;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  background: white;
+}
+
+.card-front {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.card-back {
+  left: 5%;
+  transform: rotateY(180deg); /* no translateX here! */
+}
+
+  .card-front {
+    font-size: 2.0em;
+  }
+
+  .card-back {
+    position: relative;
+    font-size: 2.0em;
+    transform: rotateY(180deg);
+    background: #e6f5e6;
+    color: #2d572c;
+    font-style: italic;
+  }
+
+  .controls {
+    margin-top: 3em;
+    z-index: 2;
+    position: relative; /* Ensure it's stacked correctly */
+  }
+
+  .controls button {
+    margin-right: 10px;
+    font-size: 2em;
+    padding: 0.5em 1em;
+  }
+
+  #retireBtn {
+    position: absolute;
+    bottom: 0.25em;
+    right: 0.25em;
+    font-size: 1.5em;
+    background: transparent;
+    border: none;
+    cursor: pointer;*/
+    z-index: 2; /* Ensure it sits above card surface */
+    }
+  #resetBtn {
+    z-index: 2; /* Ensure it sits above card surface */
+    }
+  .card-back {
+    position: relative; /* Needed so retireBtn is positioned relative to the back */
+    }
+  .answer-text {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    text-align: center;
+    /*font-size: 2em;*/
+    padding: 1em;
+    box-sizing: border-box;
+    }
+</style>
+
+</head>
+<body>
+    <p id="pageTitle"></p>
+    <div class="card-wrapper">
+        <div class="card" id="card">
+            <div class="card-inner" id="cardInner">
+            <div class="card-front" id="cardFront">Loading...</div>
+            <div class="card-back" id="cardBack">
+                <!--<button id="retireBtn" style="display: none;">✅</button>-->
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="retireBtn" style="display: none;">✅</button>
+        <!--<button id="resetBtn" style="display: none;">🔁 Reset Deck</button>-->
+        <button id="resetBtn" style="display: inline-block;">🔁 Reset Deck</button>
+    </div>
+
+
+
+<script>
+
+  const params = new URLSearchParams(window.location.search);
+  const dataFile = params.get('data') || 'none';
+  //const dataFile = params.get('data') || 'collins01';
+  const tag = params.get('tag') || 'none';
+
+  const script = document.createElement('script');
+  script.src = `${dataFile}.js`;
+
+  //const pageTitleH1 = document.getElementById("pageTitle");
+  //pageTitleH1.innerText = pageTitleH1.innerText + ' ' + dataFile;
+
+  script.onload = () => {
+    if (!window.flashcardData) {
+      document.getElementById('card').innerText = `No data found in ${dataFile}.js`;
+      return;
+    }
+
+    document.getElementById("pageTitle").textContent = window.topicHeading || "Flashcards";
+
+    const flashcards = window.flashcardData;
+    let filteredCards;
+
+    if (tag !== 'none') {
+      filteredCards = flashcards.filter(card => card.tags.includes(tag));
+    }
+    else { 
+      filteredCards = flashcards; 
+    }
+
+    let currentIndex = null;
+    let usedIndices = new Set();
+    const frontEl = document.getElementById("cardFront");
+    const backEl = document.getElementById("cardBack");
+    const cardWrapper = document.getElementById("card");
+
+    function nextCard() {
+        cardWrapper.classList.remove("flipped");
+        const retireBtn = document.getElementById('retireBtn');
+        if (retireBtn) retireBtn.style.display = 'none';
+        document.getElementById('resetBtn').style.display = 'none';
+
+        if (usedIndices.size === filteredCards.length) {
+            frontEl.innerText = "🎉 You've completed all cards!";
+            backEl.innerText = "Click 'Reset Deck' to start over.";
+            if (retireBtn) retireBtn.style.display = 'none';
+            document.getElementById('resetBtn').style.display = 'inline-block';
+            return;
+        }
+
+        const unused = filteredCards
+            .map((_, i) => i)
+            .filter(i => !usedIndices.has(i));
+
+        currentIndex = unused[Math.floor(Math.random() * unused.length)];
+        frontEl.innerText = filteredCards[currentIndex].question;
+        backEl.innerHTML = `
+            <button id="retireBtn">
+            ✅
+            </button>
+            <div class="answer-text">${filteredCards[currentIndex].answer}</div>
+        `;
+        document.getElementById('retireBtn').onclick = retireCard;
+    }
+
+    function retireCard() {
+        usedIndices.add(currentIndex);
+        setTimeout(() => {
+            nextCard(); // delay to allow flip animation to visually reset
+        }, 300); 
+    }
+
+    // Flip on click
+    document.getElementById("card").addEventListener("click", () => {
+    if (!cardWrapper.classList.contains("flipped")) {
+        cardWrapper.classList.add("flipped");
+        document.getElementById('retireBtn').style.display = 'inline-block';
+        }
+    });
+
+    document.getElementById("cardBack").addEventListener("click", () => {    
+        cardWrapper.classList.remove("flipped");
+        setTimeout(() => {
+            nextCard(); // delay to allow flip animation to visually reset
+        }, 300); // less than your CSS transition (600ms)
+    });
+
+
+    document.getElementById('resetBtn').onclick = () => {
+        usedIndices.clear();
+        document.getElementById('resetBtn').style.display = 'none';
+        nextCard();
+    };
+
+    nextCard();
+
+  };
+
+  script.onerror = () => {
+    document.getElementById('card').innerText = `Could not load ${dataFile}.js`;
+  };
+
+  document.head.appendChild(script);
+</script>
+
+</body>
+</html>

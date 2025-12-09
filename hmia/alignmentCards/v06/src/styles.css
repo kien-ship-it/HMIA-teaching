@@ -1,0 +1,150 @@
+/* ===== Design tokens ===== */
+:root{
+  --bg: #fafafa;
+  --text: #1f2328;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --card: #ffffff;
+  --accent: #cfe9ff;             /* fallback accent */
+  --radius: 12px;
+  --gap: 12px;
+  --line: 1.5;
+  --shadow: 0 1px 2px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.06);
+}
+
+/* Dark mode (auto) */
+@media (prefers-color-scheme: dark) {
+  :root{
+    --bg: #0c1116;
+    --text: #e6edf3;
+    --muted: #9aa7b2;
+    --border: #28323b;
+    --card: #0f1720;
+    --accent: #335c86;
+    --shadow: 0 1px 2px rgba(0,0,0,.6), 0 8px 24px rgba(0,0,0,.35);
+  }
+}
+
+/* ===== Page scaffold ===== */
+html,body{height:100%}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font: 16px/var(--line) system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  padding: 16px;
+}
+
+h1{font-size:1.5rem;margin:0 0 1rem}
+h3{margin:1.25rem 0 .25rem}
+h4{margin:.25rem 0 .25rem}
+h5{margin:.9rem 0 .35rem;font-size:.95rem;color:var(--muted)}
+
+a{color:inherit}
+a[href]{color:#2563eb;text-decoration:underline}
+a[href]:hover{opacity:.9}
+
+/* ===== Grid & cards ===== */
+.card-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--gap);
+  align-items: start;
+}
+
+article.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px 12px 10px;
+  border-left: 8px solid var(--card-accent, var(--accent)); /* category color hook */
+}
+
+article.card h4{
+  font-size:1.05rem;
+  letter-spacing:.2px;
+}
+
+.card-body{}
+
+/* ===== Key–value blocks ===== */
+.kv{
+  display:grid;
+  grid-template-columns: 32% 1fr;
+  gap:8px;
+  align-items:start;
+  padding: 4px 0;
+  border-top: 1px dashed transparent; /* space holder for compactness */
+}
+.kv .label{
+  font-weight:600;
+  color:var(--muted);
+}
+.kv .value{
+  color:var(--text);
+  word-break: break-word;
+}
+
+/* unordered lists inside value blocks (for unknown fields arrays, research questions) */
+.kv .value ul{
+  margin:.25rem 0 0;
+  padding-left: 1.1rem;
+}
+.kv .value li{
+  margin:.15rem 0;
+}
+
+/* ===== Table renderer basics ===== */
+table{
+  width:100%;
+  border-collapse: collapse;
+  background: var(--card);
+  border:1px solid var(--border);
+  border-radius: var(--radius);
+  overflow:hidden;
+  box-shadow: var(--shadow);
+}
+thead th{
+  text-align:left;
+  font-weight:600;
+  color:var(--muted);
+  padding:10px 12px;
+  border-bottom:1px solid var(--border);
+  background: color-mix(in oklab, var(--card), var(--text) 4%);
+}
+tbody td{
+  padding:10px 12px;
+  border-bottom:1px solid var(--border);
+}
+tbody tr:hover{ background: color-mix(in oklab, var(--card), var(--text) 3%); }
+
+/* ===== Hierarchical renderer tweaks ===== */
+section{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding:12px;
+  margin-bottom: var(--gap);
+}
+section > h3{
+  display:flex; align-items:center; gap:.5rem;
+  cursor:pointer;
+}
+section > p{ margin:.25rem 0 .5rem; color:var(--muted) }
+
+/* ===== Utilities ===== */
+.container{max-width: 1100px; margin: 0 auto}
+.sr-only{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
+}
+
+/* ===== Print-friendly ===== */
+@media print{
+  body{ background:#fff; padding:0 }
+  .card-grid{ grid-template-columns: repeat(2, 1fr); gap:12px }
+  article.card{ box-shadow:none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
